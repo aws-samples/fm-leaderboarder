@@ -1,0 +1,1 @@
+OPENAI_API_KEY = None # replace with your actual OpenAI API key

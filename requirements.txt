@@ -1,0 +1,4 @@
+boto3
+fmeval
+pandas==2.1.4
+ipywidgets
