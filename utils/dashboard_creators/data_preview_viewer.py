@@ -3,7 +3,6 @@ import re
 import json
 from unicodedata import normalize
 
-
 def create_data_preview_view(test_file_path, result_html_folder):
 
     with open(test_file_path, 'r') as json_file:
@@ -39,4 +38,5 @@ def create_data_preview_view(test_file_path, result_html_folder):
     file.write("</body>")
     file.write("</html>")
 
+    # Close the file
     file.close()
