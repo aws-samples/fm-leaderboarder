@@ -2,8 +2,10 @@
 Create a models leaderboard based on your private data.  
 
 ## Getting Started
-### Installation
+### Prerequisits
+1. AWS account with Amazon Bedrock access to selected models.
 
+### Installation
 1. Clone the repository:
    ```
    git clone https://github.com/aws-samples/fm-leaderboarder.git

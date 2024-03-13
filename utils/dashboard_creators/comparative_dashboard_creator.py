@@ -30,7 +30,6 @@ def create_comparive_dashboard(result_html_folder, tmp_json_files):
 
     models = list(model_outputs.keys())
 
-
     # generate headers name
     headers = ['Model input', 'Target output']
     for m_name in models:
@@ -41,9 +40,9 @@ def create_comparive_dashboard(result_html_folder, tmp_json_files):
     for samples in test_samples:
         row = [samples[0], samples[1]]
         for m_name in models:
-            row.append(model_outputs[m_name][samples[1]])
+            row.append(f'[{model_outputs[m_name][samples[1]]}] Output')
         rows.append(row)
 
     with open(f"{result_html_folder}/output_comparison.html", "w", encoding='utf-8-sig') as file:
         from .dashboard_template import generate_dashboard_string
-        file.write(generate_dashboard_string(headers, rows))
+        file.write(generate_dashboard_string(title = 'cross-model comparison', column_names = headers, rows = rows))

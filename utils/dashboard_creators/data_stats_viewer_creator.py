@@ -6,6 +6,7 @@ def create_data_stats_view(test_file_path, result_img_folder):
         document_sentence_length, summary_sentence_length = [], []
 
         for d in data:
+            # TODO switch to token counting instead of characters
             document_sentence_length.append(len(d['document'].replace("\n"," ").split()))
             summary_sentence_length.append(len(d['summary'].replace("\n"," ").split()))
 
@@ -19,13 +20,11 @@ def create_data_stats_view(test_file_path, result_img_folder):
                 data.append(json.loads(line))
         return data
 
-
     test_data = read_data(f"{test_file_path}")
     test_doc_lengths, test_sum_lengths = get_doc_lengths(test_data)
 
     import matplotlib.pyplot as plt
     import numpy as np
-
 
     fig, axs = plt.subplots(2)
     axs[0].hist(test_doc_lengths, density=False, bins=50)

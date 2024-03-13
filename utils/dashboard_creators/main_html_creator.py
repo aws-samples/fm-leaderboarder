@@ -7,19 +7,9 @@ def create_main_html(result_folder, models_scores):
     model_outputs = dict()
     test_samples = []
 
-    filename = f"{result_folder}/index.html"
-    file = open(filename, "w", encoding='utf-8-sig')
+    title = 'Summarization Evaluation'
 
-    html_header = f""" 
-    <!DOCTYPE html>
-    <html lang="en" xmlns="http://www.w3.org/1999/html">
-    <head>
-        <meta charset="UTF-8">
-        <title>NLG Evaluation</title>
-    </head>
-    <body>
-        <h1 align="center">NLG Evaluation</h1>
-
+    pre_table_html = """ 
         <a href="html_files/test_samples.html">Test set snapshot</a><br>
         <p>
             <u>Data statistics:</u><br>
@@ -42,43 +32,27 @@ def create_main_html(result_folder, models_scores):
         </p>
         <p>
             <u>Results</u> <a href="html_files/output_comparison.html">(response comparison dashboard)</a>: <br>
-            <table align="left" width="80%">
-                <tr>
-                    <th bgcolor="navy"><font color="white">Model</font></th>
     """
 
-
-    file.write(html_header)
-
+  # generate headers name
+    headers = ['Model']
     models_run = list(models_scores.keys())
     if len(models_run) > 0:
         metrics_used = list(models_scores[models_run[0]].keys())
         for mu in metrics_used:
-            file.write(f"<th bgcolor=navy><font color=white>{mu}</font></th>")
+            headers.append(f'Metric: {mu}')
 
-    file.write("</tr>")
-
-
+    # generate row data
+    rows = []
     for model_id, scores in models_scores.items():
-        row_str = f"""
-            <tr>
-                <td bgcolor="#faebd7"><a href="html_files/{model_id}_results.html">{model_id}</a></td>
-                """
-        file.write(row_str)
+        row = [f'<a href="html_files/{model_id}_results.html">{model_id}</a>']
         for mu in metrics_used:
-            file.write("<td>")
-            file.write("{:.4f}".format(scores[mu]))
-            file.write("</td>")
-        file.write("</tr>")
+            row.append("{:.4f}".format(scores[mu]))
+        rows.append(row)
 
-    html_suffix = """
-            </table>
-        </p>
-    </body>
-    </html>
+    index_filename = f"{result_folder}/index.html"
+    with open(index_filename, "w", encoding='utf-8-sig') as file:
+        from .dashboard_template import generate_dashboard_string
+        file.write(generate_dashboard_string(title = title, pre_table_html = pre_table_html, column_names = headers, rows = rows))
 
-    """
-    file.write(html_suffix)
-
-    file.close()
-    return filename
+    return index_filename
