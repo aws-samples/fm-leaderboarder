@@ -29,9 +29,33 @@ def generate_dashboard_string(title = 'page title', pre_table_html = "", column_
 <script>
     $(document).ready( function () {{
         $('#myTable').DataTable({{
-            "pageLength": 500
+            "pageLength": 500,
+            initComplete: function() {{
+                var api = this.api();
+
+                api.columns(':not(:first)').every(function() {{
+                    // get sorted list
+                    var col = this.index();
+                    var data = this.data().unique().map(function(value) {{
+                      return parseFloat(value);
+                    }})
+                    .toArray()
+                    .sort(function(a, b){{return b-a}});
+
+                    // paint top K results
+                    api.cells(null, col).every( function() {{
+                      var cell = parseFloat(this.data());
+                      if (cell === data[0]) {{
+                        $(this.node()).css('background-color', 'Green')
+                      }}
+                      else if (cell === data[1]) {{
+                        $(this.node()).css('background-color', 'Orange')
+                      }}
+                    }});
+                }});
+            }}
         }});
-    }})
+    }});
 </script>
 </head>
 <body>
