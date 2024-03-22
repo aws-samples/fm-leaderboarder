@@ -1,6 +1,9 @@
 import requests
 import json
-
+from datetime import datetime, timezone
+import fcntl
+from utils.model_runners.costwrapper import calculate_usage_cost
+import os
 from dataclasses import dataclass
 from typing import Tuple, Optional
 
@@ -18,8 +21,11 @@ class GPTModelConfig:
 class GPTModelRunner(ModelRunner):
     url = "https://api.openai.com/v1/chat/completions"
     
-    def __init__(self, model_config: GPTModelConfig):
+    def __init__(self, model_config: GPTModelConfig, metrics_folder: str = None,  model_key:str = None,reset = False):
         self.config = model_config
+        self._metrics_folder = metrics_folder
+        self._model_key = model_key
+        self._reset = reset
         
     def predict(self, prompt: str) -> Tuple[Optional[str], Optional[float]]:
         print(prompt)
@@ -38,12 +44,46 @@ class GPTModelRunner(ModelRunner):
             "presence_penalty": 0,
             "frequency_penalty": 0
         })
-        
+
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": "Bearer " + self.config.api_key
         }
-        
+        stime = datetime.now(timezone.utc)
+
         response = requests.request("POST", self.url, headers=headers, data=payload)
-        return json.loads(response.text)["choices"][0]["message"]["content"], None
+        delta =  datetime.now(timezone.utc) - stime
+        processing_time = delta.total_seconds() * 1000
+
+
+        response = json.loads(response.text)
+        output = response["choices"][0]["message"]["content"]
+        input_token_count = int(response["usage"]["prompt_tokens"])        
+        output_token_count = int(response["usage"]["completion_tokens"])
+        
+        if self._reset and (self._metrics_folder is not None) and os.path.exists(self._metrics_folder + f"/{self._model_key}_usage.jsonl"):
+            os.remove(self._metrics_folder + f"/{self._model_key}_usage.jsonl")
+
+        sw = json.dumps({"input_tokens":input_token_count,"output_tokens":output_token_count, "processing_time":processing_time,
+                             "cost":calculate_usage_cost(model_id=self.config.model_id, input_tokens=input_token_count, output_tokens=output_token_count, inference_time_ms=processing_time)})
+        fp = open(self._metrics_folder + f"/{self._model_key}_usage.jsonl", 'a')
+        fcntl.flock(fp.fileno(), fcntl.LOCK_EX)
+        fp.seek(0, 2)
+        fp.write(sw + "\n")
+        fcntl.flock(fp.fileno(), fcntl.LOCK_UN)
+        fp.close()
+
+        return output, None
+    
+    def __reduce__(self):
+        """
+        Custom serializer method used by Ray when it serializes instances of this
+        class in eval_algorithms.util.generate_model_predict_response_for_dataset.
+        """
+        serialized_data = (
+            self.config,
+            self._metrics_folder,
+            self._model_key
+        )
+        return self.__class__, serialized_data

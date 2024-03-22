@@ -95,7 +95,7 @@ def calculate_bartscore(tmp_json_files, models_scores, path_to_finetuned_bart):
     scores_dict = dict()
 
     for result_file in listdir(tmp_json_files):
-        if not result_file.endswith(".jsonl"):
+        if not result_file.endswith("_metrics.jsonl"):
             continue
 
         model = result_file.replace("_metrics.jsonl", "")

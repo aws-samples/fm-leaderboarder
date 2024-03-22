@@ -3,9 +3,12 @@
     position: relative;
     display: inline-block;
   }
+td:last-child,td:nth-last-child(2),td:first-child, td:nth-child(2) {
+    background: white !important
+  } 
   
-  /* Tooltip text */
-  .tooltip .tooltiptext {
+/* Tooltip text */
+.tooltip .tooltiptext {
     visibility: hidden;
     width: 300px;
     background-color: #555;
@@ -22,8 +25,8 @@
     transition: opacity 0.3s;
   }
   
-  /* Tooltip arrow */
-  .tooltip .tooltiptext::after {
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
     content: "";
     position: absolute;
     top: 100%;
@@ -34,8 +37,8 @@
     border-color: #555 transparent transparent transparent;
   }
   
-  /* Show the tooltip text when you mouse over the tooltip container */
-  .tooltip:hover .tooltiptext {
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
     visibility: visible;
     opacity: 1;
   }
