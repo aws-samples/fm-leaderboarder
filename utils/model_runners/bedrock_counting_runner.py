@@ -4,15 +4,26 @@ from fmeval.model_runners.bedrock_model_runner import BedrockModelRunner
 import json
 from datetime import datetime, timezone
 import fcntl
-from utils.model_runners.costwrapper import calculate_usage_cost
 import os
 
 class CountingBedrockModelRunner(BedrockModelRunner):
-
-    def __init__(self, model_id: str, content_template: str, output: str | None = None, log_probability: str | None = None, content_type: str = MIME_TYPE_JSON, accept_type: str = MIME_TYPE_JSON, metrics_folder: str = None,  model_key:str = None,reset = False):
+    '''Decorates the base BedrockModelRunner to emit invocation metrics,
+      emits accurate model consumption figures in tokens using Bedrock 
+      response metadata  available from the response headers.'''
+    
+    def __init__(self, model_id: str, content_template: str, output: str | None = None, log_probability: str | None = None, content_type: str = MIME_TYPE_JSON, accept_type: str = MIME_TYPE_JSON, metrics_folder: str = None,  model_key:str = None):
+        """
+        :param model_id: Id of the Bedrock model to be used for model predictions
+        :param content_template: String template to compose the model input from the prompt
+        :param output: JMESPath expression of output in the model output
+        :param log_probability: JMESPath expression of log probability in the model output
+        :param content_type: The content type of the request sent to the model for inference
+        :param accept_type: The accept type of the request sent to the model for inference
+        :param metrics_folder: The destination of the invocation metric file
+        :param model_key: The base name of the file to disambiguate metrics
+        """
         super().__init__(model_id = model_id, content_template = content_template, output = output, log_probability=log_probability, content_type = content_type, accept_type = accept_type)
         self._metrics_folder = metrics_folder
-        self._reset = reset
         self._model_key = model_key
         
 
@@ -25,13 +36,13 @@ class CountingBedrockModelRunner(BedrockModelRunner):
         
         composed_data = self._composer.compose(prompt)
         body = json.dumps(composed_data)
-        stime = datetime.now(timezone.utc)
+        start_time = datetime.now(timezone.utc)
 
         response = self._bedrock_runtime_client.invoke_model(
             body=body, modelId=self._model_id, accept=self._accept_type, contentType=self._content_type
         )
-        delta =  datetime.now(timezone.utc) - stime
-        processing_time = delta.total_seconds() * 1000
+        delta =  datetime.now(timezone.utc) - start_time
+        processing_time = delta.total_seconds()
         model_output = json.loads(response.get("body").read())
         
         input_token_count = int(response["ResponseMetadata"]["HTTPHeaders"][
@@ -53,11 +64,7 @@ class CountingBedrockModelRunner(BedrockModelRunner):
             else None
         )
         
-        if self._reset and (self._metrics_folder is not None) and os.path.exists(self._metrics_folder + f"/{self._model_key}_usage.jsonl"):
-            os.remove(self._metrics_folder + f"/{self._model_key}_usage.jsonl")
-
-        sw = json.dumps({"input_tokens":input_token_count,"output_tokens":output_token_count, "processing_time":processing_time,
-                             "cost":calculate_usage_cost(model_id=self._model_id, input_tokens=input_token_count, output_tokens=output_token_count, inference_time_ms=processing_time)})
+        sw = json.dumps({"input_tokens":input_token_count,"output_tokens":output_token_count, "processing_time":processing_time,"model_id":self._model_id})
         fp = open(self._metrics_folder + f"/{self._model_key}_usage.jsonl", 'a')
         fcntl.flock(fp.fileno(), fcntl.LOCK_EX)
         fp.seek(0, 2)

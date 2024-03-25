@@ -2,7 +2,6 @@ import requests
 import json
 from datetime import datetime, timezone
 import fcntl
-from utils.model_runners.costwrapper import calculate_usage_cost
 import os
 from dataclasses import dataclass
 from typing import Tuple, Optional
@@ -21,11 +20,10 @@ class GPTModelConfig:
 class GPTModelRunner(ModelRunner):
     url = "https://api.openai.com/v1/chat/completions"
     
-    def __init__(self, model_config: GPTModelConfig, metrics_folder: str = None,  model_key:str = None,reset = False):
+    def __init__(self, model_config: GPTModelConfig, metrics_folder: str = None,  model_key:str = None):
         self.config = model_config
         self._metrics_folder = metrics_folder
         self._model_key = model_key
-        self._reset = reset
         
     def predict(self, prompt: str) -> Tuple[Optional[str], Optional[float]]:
         print(prompt)
@@ -50,11 +48,11 @@ class GPTModelRunner(ModelRunner):
             "Accept": "application/json",
             "Authorization": "Bearer " + self.config.api_key
         }
-        stime = datetime.now(timezone.utc)
+        start_time = datetime.now(timezone.utc)
 
         response = requests.request("POST", self.url, headers=headers, data=payload)
-        delta =  datetime.now(timezone.utc) - stime
-        processing_time = delta.total_seconds() * 1000
+        delta =  datetime.now(timezone.utc) - start_time
+        processing_time = delta.total_seconds() 
 
 
         response = json.loads(response.text)
@@ -62,11 +60,7 @@ class GPTModelRunner(ModelRunner):
         input_token_count = int(response["usage"]["prompt_tokens"])        
         output_token_count = int(response["usage"]["completion_tokens"])
         
-        if self._reset and (self._metrics_folder is not None) and os.path.exists(self._metrics_folder + f"/{self._model_key}_usage.jsonl"):
-            os.remove(self._metrics_folder + f"/{self._model_key}_usage.jsonl")
-
-        sw = json.dumps({"input_tokens":input_token_count,"output_tokens":output_token_count, "processing_time":processing_time,
-                             "cost":calculate_usage_cost(model_id=self.config.model_id, input_tokens=input_token_count, output_tokens=output_token_count, inference_time_ms=processing_time)})
+        sw = json.dumps({"input_tokens":input_token_count,"output_tokens":output_token_count, "processing_time":processing_time, "model_id":self.config.model_id})
         fp = open(self._metrics_folder + f"/{self._model_key}_usage.jsonl", 'a')
         fcntl.flock(fp.fileno(), fcntl.LOCK_EX)
         fp.seek(0, 2)

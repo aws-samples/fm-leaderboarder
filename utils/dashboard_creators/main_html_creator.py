@@ -44,7 +44,7 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
         for mu in metrics_used:
             headers.append(f'Metric: {mu}')
     headers.append('Cost ($)')
-    headers.append('Latency (ms)')
+    headers.append('Latency (s)')
     
     # generate row data
     rows = []
