@@ -38,7 +38,7 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
   # generate headers name
     headers = ['Model']
     models_run = list(models_scores.keys())
-    headers.append('Rank')
+    headers.append('Win Rate')
     if len(models_run) > 0:
         metrics_used = list(models_scores[models_run[0]].keys())
         for mu in metrics_used:
@@ -50,7 +50,7 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
     rows = []
     for model_id, scores in models_scores.items():
         row = [f'<a href="html_files/{model_id}_results.html">{model_id}</a>']
-        row.append(model_ranking[model_id])
+        row.append("{:.3f}".format(model_ranking[model_id]) )
         for mu in metrics_used:
             row.append("{:.4f}".format(scores[mu]))
         if model_id in model_usage and model_usage[model_id] is not None:
@@ -62,6 +62,7 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
         rows.append(row)
         
     index_filename = f"{result_folder}/index.html"
+
     with open(index_filename, "w", encoding='utf-8-sig') as file:
         from .dashboard_template import generate_dashboard_string
         file.write(generate_dashboard_string(title = title, pre_table_html = pre_table_html, column_names = headers, rows = rows))
