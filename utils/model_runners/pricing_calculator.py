@@ -21,28 +21,22 @@ class PricingCalculator():
     for model in boto3.client('bedrock').list_foundation_models()['modelSummaries']:
         PricingCalculator._modelNameMap[model['modelId']] = model['modelName']
 
-    next_token = None
-    objects = []    
-    while True:
-        try:
-            if next_token:
-                response = PricingCalculator._pricing_client.get_products(ServiceCode='AmazonBedrock', NextToken=next_token)
-            else:
-                response = PricingCalculator._pricing_client.get_products(ServiceCode='AmazonBedrock')
-            objects.extend(response['PriceList'])
-            
-            if 'NextToken' in response:
-                next_token = response['NextToken']
-            else:
-                break
-        except Exception as e:
-            logger.log(logging.WARNING, 'Failed to fetch price list')
-            
-            break
-          
+    pricing_data = []
+
+    paginator = PricingCalculator._pricing_client.get_paginator('get_products')
+    operation_parameters = {'ServiceCode': 'AmazonBedrock'}
+    page_iterator = paginator.paginate(**operation_parameters)
+
+    try:
+        for page in page_iterator:
+            pricing_data.extend(page['PriceList'])
+    except Exception as e:
+        logger.log(logging.WARNING, f'Failed to fetch price list: {e}')
+        return
+    
     
 
-    for item in objects:
+    for item in pricing_data:
         try:
             price_item = json.loads(item)
             usage_type = price_item['product']['attributes']['usagetype']
