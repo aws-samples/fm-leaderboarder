@@ -36,7 +36,7 @@ class PricingCalculator():
             else:
                 break
         except Exception as e:
-            logger.log(logging.ERROR, 'Failed to fetch price list')
+            logger.log(logging.WARNING, 'Failed to fetch price list')
             
             break
           
