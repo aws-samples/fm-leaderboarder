@@ -2,13 +2,17 @@ import html
 
 def get_optional_tooltip_html(name : str):
     tips_by_metric = { 
+        "win rate" : "How many models this model outpefrom on average per each metric",
         "meteor" : "METEOR is a metric for text similarity between the machine-produced summary and human-produced reference summaries.",
         "rouge" : "The ROUGE metric measures text similarity by computing overlapping n-grams between a machine-generated text and one or more reference human-written texts.",
         "bertscore" : "The BERTScore is a text similarity metric that leverages BERT's contextual embeddings to compute token similarities between the candidate and reference texts.",
         "bartscore" : "",
     }
-    if name.lower().startswith("metric:"):
-        metric_name = name.lower().split(' ')[-1]
+    if name.lower().startswith("metric:") or name == 'Win Rate':
+        if name.lower().startswith("metric:"):
+            metric_name = name.lower().split(' ')[-1]
+        else: 
+            metric_name = name.lower()
         if metric_name in tips_by_metric:  
             tip = tips_by_metric[metric_name]             
             tooltip_html ='''
@@ -55,9 +59,10 @@ def generate_dashboard_string(title = 'page title', pre_table_html = "", column_
             "pageLength": 500,
             initComplete: function() {{
                 var api = this.api();
-
-                api.columns(':not(:first)').every(function() {{
+                // only color metrics and rank columns
+                api.columns(':not(:first,:last-child,:nth-last-child(2),:nth-last-child(3),:nth-last-child(4))').every(function() {{
                     // get sorted list
+
                     var col = this.index();
                     var data = this.data().unique().map(function(value) {{
                       return parseFloat(value);
@@ -69,10 +74,13 @@ def generate_dashboard_string(title = 'page title', pre_table_html = "", column_
                     api.cells(null, col).every( function() {{
                       var cell = parseFloat(this.data());
                       if (cell === data[0]) {{
-                        $(this.node()).css('background-color', 'Green')
+                        $(this.node()).css('background-color', 'darkgreen')
                       }}
                       else if (cell === data[1]) {{
-                        $(this.node()).css('background-color', 'Orange')
+                        $(this.node()).css('background-color', 'green')
+                      }}
+                      else if (cell === data[2]) {{
+                        $(this.node()).css('background-color', 'lightgreen')
                       }}
                     }});
                 }});
