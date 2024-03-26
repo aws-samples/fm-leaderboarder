@@ -58,8 +58,8 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
         for mu in metrics_used:
             row.append("{:.4f}".format(scores[mu]))
         if model_id in model_usage and model_usage[model_id] is not None and model_usage[model_id]['cost_model'] == PricingCalculator.COST_PER_TOKEN:
-            row.append("{:.4f}".format(model_usage[model_id]['cost']))        
-            row.append("{:.4f}".format(model_usage[model_id]['processing_time']))
+            row.append("{:.2f}".format(model_usage[model_id]['cost']))        
+            row.append("{:.2f}".format(model_usage[model_id]['processing_time']))
             row.append("{:.4f}".format(model_usage[model_id]['cost_input_1M']))
             row.append("{:.4f}".format(model_usage[model_id]['cost_output_1M']))
         else:

@@ -59,9 +59,10 @@ def generate_dashboard_string(title = 'page title', pre_table_html = "", column_
             "pageLength": 500,
             initComplete: function() {{
                 var api = this.api();
-
-                api.columns(':not(:first)').every(function() {{
+                // only color metrics and rank columns
+                api.columns(':not(:first,:last-child,:nth-last-child(2),:nth-last-child(3),:nth-last-child(4))').every(function() {{
                     // get sorted list
+
                     var col = this.index();
                     var data = this.data().unique().map(function(value) {{
                       return parseFloat(value);

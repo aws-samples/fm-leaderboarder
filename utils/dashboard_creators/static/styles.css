@@ -3,9 +3,6 @@
     position: relative;
     display: inline-block;
   }
-td:last-child,td:nth-last-child(2),td:nth-last-child(3),td:nth-last-child(4),td:first-child{
-    background: white !important
-  } 
   
 /* Tooltip text */
 .tooltip .tooltiptext {

@@ -1,6 +1,7 @@
 import pytest
 import os
-from pricing_calculator import PricingCalculator
+
+from utils.model_runners.pricing_calculator import PricingCalculator
 
 
 def test_instance_pricing():
