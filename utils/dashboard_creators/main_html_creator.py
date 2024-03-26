@@ -2,6 +2,8 @@ import json
 from os import listdir
 from os.path import isfile, join
 
+from utils.model_runners.pricing_calculator import PricingCalculator
+
 
 def create_main_html(result_folder, models_scores, model_usage, model_ranking):
     model_outputs = dict()
@@ -45,6 +47,8 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
             headers.append(f'Metric: {mu}')
     headers.append('Total Costs ($)')
     headers.append('Latency (s)')
+    headers.append('cost/1MT In ($)')
+    headers.append('cost/1MT Out ($)')
     
     # generate row data
     rows = []
@@ -53,10 +57,14 @@ def create_main_html(result_folder, models_scores, model_usage, model_ranking):
         row.append("{:.3f}".format(model_ranking[model_id]) )
         for mu in metrics_used:
             row.append("{:.4f}".format(scores[mu]))
-        if model_id in model_usage and model_usage[model_id] is not None:
+        if model_id in model_usage and model_usage[model_id] is not None and model_usage[model_id]['cost_model'] == PricingCalculator.COST_PER_TOKEN:
             row.append("{:.4f}".format(model_usage[model_id]['cost']))        
             row.append("{:.4f}".format(model_usage[model_id]['processing_time']))
+            row.append("{:.4f}".format(model_usage[model_id]['cost_input_1M']))
+            row.append("{:.4f}".format(model_usage[model_id]['cost_output_1M']))
         else:
+            row.append('-')
+            row.append('-')
             row.append('-')
             row.append('-')
         rows.append(row)

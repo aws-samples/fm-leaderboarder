@@ -12,14 +12,16 @@ class PricingCalculator():
   '''Calculate the pricing of the inference depending on the model specific.
   Uses pricing API where available, lookup tables from pricing sources when not available,
   and can calculate cost both per token pricing and per hosting time models.'''
-
+  COST_PER_TOKEN = 'cpt'
+  COST_PER_HOUR = 'cph'
+  
   _pricing_client = boto3.client('pricing', region_name = 'us-east-1')
-  _mName_price_map = {}
-  _modelNameMap = {}
+  _model_prive_by_name = {}
+  _model_name_by_id = {}
   @classmethod
   def static_init(self):
     for model in boto3.client('bedrock').list_foundation_models()['modelSummaries']:
-        PricingCalculator._modelNameMap[model['modelId']] = model['modelName']
+        PricingCalculator._model_name_by_id[model['modelId']] = model['modelName']
 
     pricing_data = []
 
@@ -62,16 +64,16 @@ class PricingCalculator():
             l2 = list(l1.values())[0]['priceDimensions']
             price_per_unit = list(l2.values())[0]['pricePerUnit']['USD']
             unit = list(l2.values())[0]['unit']
-            if not model_name in PricingCalculator._mName_price_map:
-                PricingCalculator._mName_price_map[model_name] = dict()
-            PricingCalculator._mName_price_map[model_name]['model_id'] = model_name
+            if not model_name in PricingCalculator._model_prive_by_name:
+                PricingCalculator._model_prive_by_name[model_name] = dict()
+            PricingCalculator._model_prive_by_name[model_name]['model_id'] = model_name
             if 'input-tokens' in usage_type and unit =='1K tokens':
-                PricingCalculator._mName_price_map[model_name]['input_cost_per_1000_tokens'] = price_per_unit
+                PricingCalculator._model_prive_by_name[model_name]['input_cost_per_1000_tokens'] = price_per_unit
             elif 'output-tokens' in usage_type and unit =='1K tokens':
-                PricingCalculator._mName_price_map[model_name]['output_cost_per_1000_tokens'] = price_per_unit
+                PricingCalculator._model_prive_by_name[model_name]['output_cost_per_1000_tokens'] = price_per_unit
             elif 'ProvisionedThroughput' in usage_type:
-                PricingCalculator._mName_price_map[model_name]['instance_type'] = usage_type
-                PricingCalculator._mName_price_map[model_name]['hosting_cost_per_hour'] = price_per_unit
+                PricingCalculator._model_prive_by_name[model_name]['instance_type'] = usage_type
+                PricingCalculator._model_prive_by_name[model_name]['hosting_cost_per_hour'] = price_per_unit
             else:
                 pass
         except Exception as e:
@@ -249,7 +251,7 @@ class PricingCalculator():
 
 
   @classmethod
-  def instance_pricing(self, instance_type):
+  def _instance_pricing(self, instance_type):
     data = PricingCalculator._pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[{"Field": "tenancy", "Value": "shared", "Type": "TERM_MATCH"},
       {"Field": "operatingSystem", "Value": "Linux", "Type": "TERM_MATCH"},
       {"Field": "preInstalledSw", "Value": "NA", "Type": "TERM_MATCH"},
@@ -267,13 +269,13 @@ class PricingCalculator():
     raise(Exception(f'Failed to get instance pricing for instance type {instance_type}'))
 
   @classmethod 
-  def retrieveCostStructure(self, model_id):
+  def retrieve_cost_structure(self, model_id):
       cost_structure = None
-      mName = PricingCalculator._modelNameMap[model_id] if model_id in PricingCalculator._modelNameMap else None
+      mName = PricingCalculator._model_name_by_id[model_id] if model_id in PricingCalculator._model_name_by_id else None
       if not (mName == None):
           #handle internal model   
-          if mName in PricingCalculator._mName_price_map:
-              return PricingCalculator._mName_price_map[mName]
+          if mName in PricingCalculator._model_prive_by_name:
+              return PricingCalculator._model_prive_by_name[mName]
       for model_cost in PricingCalculator._lookup_price_table:
           if model_id in model_cost['model_id'] or model_id.split(':')[0] in model_cost['model_id'].split(':')[0]:
               return model_cost 
@@ -281,13 +283,13 @@ class PricingCalculator():
   @classmethod
   def _calculate_usage_cost(self, model_id, input_tokens:int=0, output_tokens:int=0, inference_time_s:float=0, instance_type:str = None):
       try:
-          cost_structure = PricingCalculator.retrieveCostStructure(model_id)
+          cost_structure = PricingCalculator.retrieve_cost_structure(model_id)
           if cost_structure is None:
               return None
           if 'instance_type' in cost_structure and cost_structure['instance_type'] == instance_type:
-              return PricingCalculator._calculate_usage_per_second(inference_time_s, cost_structure)
+              return PricingCalculator._calculate_usage_per_second(inference_time_s, cost_structure), cost_structure, PricingCalculator.COST_PER_HOUR
           else: 
-              return PricingCalculator._calculate_usage_per_token(input_tokens, output_tokens, cost_structure)
+              return PricingCalculator._calculate_usage_per_token(input_tokens, output_tokens, cost_structure),cost_structure, PricingCalculator.COST_PER_TOKEN
       except Exception as e:
           logger.log(logging.ERROR, f'Failed to calculate cost for model {model_id}, invokation parameters: {input_tokens}, {output_tokens}, {inference_time_s}')
           raise e;        
@@ -296,7 +298,7 @@ class PricingCalculator():
   def _calculate_usage_per_second(self, inference_time_s:float=0, cost_structure = None):
       if 'hosting_cost_per_hour' in cost_structure:
           return cost_structure['hosting_cost_per_hour'] * inference_time_s / (60*60)
-      return PricingCalculator.instance_pricing(cost_structure['instance_type']) * inference_time_s / (60*60) 
+      return PricingCalculator._instance_pricing(cost_structure['instance_type']) * inference_time_s / (60*60) 
   
   @classmethod
   def _calculate_usage_per_token(self, input_tokens, output_tokens, model_cost):
@@ -324,7 +326,11 @@ class PricingCalculator():
       'input_tokens': 0,
       'output_tokens': 0,
       'processing_time': 0,
-      'cost': None
+      'cost': None,
+      'cost_model': None,
+      'cost_hour': None,
+      'cost_input_1M': None,
+      'cost_output_1M': None
       }
 
       with open(file, 'r') as file:
@@ -332,9 +338,16 @@ class PricingCalculator():
               item = json.loads(line)
               input_tokens = item['input_tokens'] if 'input_tokens' in item else 0
               output_tokens = item['output_tokens'] if 'output_tokens' in item else 0
-              processing_time = item['processing_time'] if 'processing_time' in item else 0
-              cost = PricingCalculator._calculate_usage_cost(item['model_id'], input_tokens, output_tokens, processing_time,
+              processing_time = item['processing_time'] if 'processing_time' in item else 0                  
+              cost, cost_structure, cost_model = PricingCalculator._calculate_usage_cost(item['model_id'], input_tokens, output_tokens, processing_time,
                   item['instance_type'] if 'instance_type' in item else None )
+              if sum_dict['cost_model'] == None:
+                  sum_dict['cost_model'] = cost_model
+                  if cost_model == PricingCalculator.COST_PER_HOUR:
+                      sum_dict['cost_hour'] = cost_structure['hosting_cost_per_hour'] if 'hosting_cost_per_hour' in cost_structure else PricingCalculator._instance_pricing(cost_structure['instance_type'])
+                  if cost_model == PricingCalculator.COST_PER_TOKEN:
+                      sum_dict['cost_input_1M'] = cost_structure['input_cost_per_1000_tokens']*1000.0
+                      sum_dict['cost_output_1M'] = cost_structure['output_cost_per_1000_tokens']*1000.0
               sum_dict['input_tokens'] += input_tokens
               sum_dict['output_tokens'] += output_tokens
               sum_dict['processing_time'] += processing_time
@@ -351,7 +364,7 @@ class PricingCalculator():
       return sum_dict
 
   @classmethod
-  def cleanupPreviousRuns(self, dir_path):
+  def cleanup_previous_runs(self, dir_path):
     for file_name in os.listdir(dir_path):
       if file_name.endswith('_usage.jsonl'):
           # Construct the full file path

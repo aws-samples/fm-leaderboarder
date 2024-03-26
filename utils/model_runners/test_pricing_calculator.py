@@ -5,13 +5,13 @@ from pricing_calculator import PricingCalculator
 
 def test_instance_pricing():
     instance_type = "g5.12xlarge"
-    instance_price = PricingCalculator.instance_pricing(instance_type)
+    instance_price = PricingCalculator._instance_pricing(instance_type)
     assert isinstance(instance_price, float)
     # Add more assertions to verify the returned instance price
 
 def test_retrieve_cost_structure():
     model_id = "anthropic.claude-v2:1"
-    cost_structure = PricingCalculator.retrieveCostStructure(model_id)
+    cost_structure = PricingCalculator.retrieve_cost_structure(model_id)
     assert cost_structure is not None
     assert "model_id" in cost_structure
     assert "input_cost_per_1000_tokens" in cost_structure
@@ -19,23 +19,23 @@ def test_retrieve_cost_structure():
 
     # Test with a model_id that doesn't have a cost structure
     invalid_model_id = "invalid_model_id"
-    cost_structure = PricingCalculator.retrieveCostStructure(invalid_model_id)
+    cost_structure = PricingCalculator.retrieve_cost_structure(invalid_model_id)
     assert cost_structure is None
 
 def retrieve_cost_structure_variants():
-    cost_structure = PricingCalculator.retrieveCostStructure('anthropic.claude-instant-v1:2:100k')
+    cost_structure = PricingCalculator.retrieve_cost_structure('anthropic.claude-instant-v1:2:100k')
     assert cost_structure is not None
     assert "model_name" in cost_structure
     assert "input_cost_per_1000_tokens" in cost_structure
     assert "output_cost_per_1000_tokens" in cost_structure
     assert cost_structure['input_cost_per_1000_tokens'] == 0.008
-    cost_structure = PricingCalculator.retrieveCostStructure('anthropic.claude-instant-v1:2')
+    cost_structure = PricingCalculator.retrieve_cost_structure('anthropic.claude-instant-v1:2')
     assert cost_structure is not None
     assert "model_name" in cost_structure
     assert "input_cost_per_1000_tokens" in cost_structure
     assert "output_cost_per_1000_tokens" in cost_structure
     assert cost_structure['input_cost_per_1000_tokens'] == 0.008
-    cost_structure = PricingCalculator.retrieveCostStructure('anthropic.claude-instant-v1')
+    cost_structure = PricingCalculator.retrieve_cost_structure('anthropic.claude-instant-v1')
     assert cost_structure is not None
     assert "model_name" in cost_structure
     assert "input_cost_per_1000_tokens" in cost_structure
@@ -46,7 +46,7 @@ def retrieve_cost_structure_variants():
 
 def test_read_model_score_aggregate(tmpdir):
     folder = str(tmpdir)
-    PricingCalculator.cleanupPreviousRuns(folder)
+    PricingCalculator.cleanup_previous_runs(folder)
     model_name = "anthropic.claude-v2"
     usage_file = f"{folder}/{model_name}_usage.jsonl"
 
@@ -64,7 +64,7 @@ def test_read_model_score_aggregate(tmpdir):
 
 def test_read_model_score_aggregate_from_api(tmpdir):
     folder = str(tmpdir)
-    PricingCalculator.cleanupPreviousRuns(folder)
+    PricingCalculator.cleanup_previous_runs(folder)
     model_name = "amazon.titan-text-lite-v1"
     usage_file = f"{folder}/{model_name}_usage.jsonl"
 
@@ -83,7 +83,7 @@ def test_read_model_score_aggregate_from_api(tmpdir):
 
 def test_read_timed_score_aggregate(tmpdir):
     folder = str(tmpdir)
-    PricingCalculator.cleanupPreviousRuns(folder)
+    PricingCalculator.cleanup_previous_runs(folder)
     model_name = "self_hosted_test"
     usage_file = f"{folder}/{model_name}_usage.jsonl"
 
@@ -103,5 +103,5 @@ def test_cleanup_previous_runs(tmpdir):
     folder = str(tmpdir)
     open(f"{folder}/test_model_usage.jsonl", "w").close()
 
-    PricingCalculator.cleanupPreviousRuns(folder)
+    PricingCalculator.cleanup_previous_runs(folder)
     assert not any(fname.endswith("_usage.jsonl") for fname in os.listdir(folder))

@@ -3,7 +3,7 @@
     position: relative;
     display: inline-block;
   }
-td:last-child,td:nth-last-child(2),td:first-child, td:nth-child(2) {
+td:last-child,td:nth-last-child(2),td:nth-last-child(3),td:nth-last-child(4),td:first-child, td:nth-child(2) {
     background: white !important
   } 
   
