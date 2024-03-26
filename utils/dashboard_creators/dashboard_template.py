@@ -73,10 +73,13 @@ def generate_dashboard_string(title = 'page title', pre_table_html = "", column_
                     api.cells(null, col).every( function() {{
                       var cell = parseFloat(this.data());
                       if (cell === data[0]) {{
-                        $(this.node()).css('background-color', 'Green')
+                        $(this.node()).css('background-color', 'darkgreen')
                       }}
                       else if (cell === data[1]) {{
-                        $(this.node()).css('background-color', 'Orange')
+                        $(this.node()).css('background-color', 'green')
+                      }}
+                      else if (cell === data[2]) {{
+                        $(this.node()).css('background-color', 'lightgreen')
                       }}
                     }});
                 }});
