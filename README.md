@@ -1,5 +1,7 @@
 # FM-Leaderboarder
-Create a models leaderboard based on your private data.  
+Create a models leaderboard based on your private data and your own metrics.  
+
+![Screenshot](./resources/screenshot.jpg)
 
 ## Getting Started
 ### Prerequisits
