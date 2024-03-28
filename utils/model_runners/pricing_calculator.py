@@ -332,9 +332,11 @@ class PricingCalculator():
       'cost_input_1M': None,
       'cost_output_1M': None
       }
+      samples = 0
 
       with open(file, 'r') as file:
           for line in file:
+              samples = samples + 1
               item = json.loads(line)
               input_tokens = item['input_tokens'] if 'input_tokens' in item else 0
               output_tokens = item['output_tokens'] if 'output_tokens' in item else 0
@@ -360,7 +362,9 @@ class PricingCalculator():
                                                                       
 
       # Convert the sum dictionary to JSON string
-    
+      sum_dict['samples'] = samples
+      sum_dict['avg_cost'] = sum_dict['cost'] / samples
+      sum_dict['avg_processing_time'] = sum_dict['processing_time'] / samples
       return sum_dict
 
   @classmethod
