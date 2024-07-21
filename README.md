@@ -69,6 +69,8 @@ Contributions to FM-Leaderboarder are welcome! Please refer to the [CONTRIBUTING
 <a href="https://github.com/gabishalev"><img src="https://avatars.githubusercontent.com/u/163285646?v=4" title="Gabi Shalev" width="50" height="50"></a>
 <a href="https://github.com/LorenzoBoccaccia"><img src="https://avatars.githubusercontent.com/u/3062853?v=4" title="Lorenzo Boccaccia" width="50" height="50"></a>
 <a href="https://github.com/doronbl"><img src="https://avatars.githubusercontent.com/u/1909792?v=4" title="Doron" width="50" height="50"></a>
+<a href="https://github.com/Edo-Friedman"><img src="https://avatars.githubusercontent.com/u/5992063?v=4" title="Edo-Friedman" width="50" height="50"></a>
+ 
 
 
 ## License
