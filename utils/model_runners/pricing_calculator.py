@@ -302,8 +302,13 @@ class PricingCalculator():
   
   @classmethod
   def _calculate_usage_per_token(self, input_tokens, output_tokens, model_cost):
-      input_cost = model_cost['input_cost_per_1000_tokens'] * input_tokens / 1000
-      output_cost = model_cost['output_cost_per_1000_tokens'] * output_tokens / 1000
+      input_cost = float(model_cost['input_cost_per_1000_tokens']) * input_tokens / 1000
+      # Since 'output_cost_per_1000_tokens' is not always given...
+      try:
+          output_cost = float(model_cost['output_cost_per_1000_tokens']) * output_tokens / 1000
+      except Exception:
+          output_cost = input_cost
+      
       return input_cost + output_cost 
   
   @classmethod
@@ -348,8 +353,17 @@ class PricingCalculator():
                   if cost_model == PricingCalculator.COST_PER_HOUR:
                       sum_dict['cost_hour'] = cost_structure['hosting_cost_per_hour'] if 'hosting_cost_per_hour' in cost_structure else PricingCalculator._instance_pricing(cost_structure['instance_type'])
                   if cost_model == PricingCalculator.COST_PER_TOKEN:
-                      sum_dict['cost_input_1M'] = cost_structure['input_cost_per_1000_tokens']*1000.0
-                      sum_dict['cost_output_1M'] = cost_structure['output_cost_per_1000_tokens']*1000.0
+                      
+                      # cast to float to avoid exception when multiplying int with float ('cost_input_1M')
+                      sum_dict['cost_input_1M'] = float(cost_structure['input_cost_per_1000_tokens'])*1000.0
+                      
+                      # When 'cost_output_1M' value, does not exist
+                      try:
+                        output_cost_per_1000_tokens = float(cost_structure['output_cost_per_1000_tokens'])*1000.0
+                      except Exception:
+                        output_cost_per_1000_tokens = float(cost_structure['input_cost_per_1000_tokens'])*1000.0
+
+                      sum_dict['cost_output_1M'] = output_cost_per_1000_tokens
               sum_dict['input_tokens'] += input_tokens
               sum_dict['output_tokens'] += output_tokens
               sum_dict['processing_time'] += processing_time

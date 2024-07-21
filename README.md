@@ -22,6 +22,19 @@ There's no one-fit-all leaderboard. `FM-Leaderboard-er` will allow you to find t
 ## Getting Started
 ### Prerequisits
 1. AWS account with Amazon Bedrock access to selected models.
+2. Hugging Face access token
+The code will download Dataset from Huggingface (```https://huggingface.co/api/datasets/Salesforce/dialogstudio```), this will require an access token, if you don't have one yet, follow these steps:
+
+* Signup to Hugging Face: ```https://huggingface.co```
+* Generate an access token (save it for further use): ```https://huggingface.co/settings/tokens```
+* Store the access token localy, by installing python lib huggingface_hub and execute from shell:
+    ```
+    > pip install huggingface_hub
+    > python -c "from huggingface_hub.hf_api import HfFolder; HfFolder.save_token('YOUR_HUGGINGFACE_TOKEN')"
+    ```
+
+
+***(Verify you now have:  ```~/.cache/huggingface```)***
 
 ### Installation
 1. Clone the repository:
