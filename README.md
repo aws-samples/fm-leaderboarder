@@ -1,3 +1,13 @@
+**⚠️ MAINTENANCE NOTICE **  
+**This project is no longer actively maintained.**  
+While the repository remains available for educational purposes, we recommend exploring more current alternatives for production use:
+- [RAGAS](https://github.com/explodinggradients/ragas) - A comprehensive framework for RAG evaluation  
+- [Amazon Bedrock](https://aws.amazon.com/bedrock/) - A fully managed service for foundation models from Amazon  
+For a practical example of using these alternatives, check out our [evaluation notebook using RAGAS and Bedrock](https://github.com/gilinachum/ragas-evaluation-and-bedrock-guardrails/blob/main/evaluate_prod_readiness.ipynb).
+
+<span> Additionally, for Latency benchmarking check the code samples for [Latency Benchmarking tools for Amazon Bedrock](https://github.com/gilinachum/bedrock-latency/blob/main/README.md).</span>
+
+----
 
 <h1 align="center">
 FM-Leaderboard-er 
